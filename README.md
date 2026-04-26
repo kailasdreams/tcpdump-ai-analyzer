@@ -161,4 +161,4 @@ Both Anthropic v1 SDK and OpenAI v1/v0 SDK variants are supported with automatic
 
 ## License
 
-MIT — see `LICENSE` for details.
+Contact to Kailas Pathade 7777050805 for more details 
