@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NetDiag Pro | AI-Powered Packet Analysis Platform</title>
+
+  <!-- IBM Plex fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── Design Tokens ─────────────────────────────────────────── */
+    :root {
+      --bg-base:        #0a0d14;
+      --bg-surface:     #0f1522;
+      --bg-elevated:    #141d2e;
+      --bg-card:        #182035;
+      --border:         #1e2d47;
+      --border-accent:  #1a3a6e;
+      --blue-primary:   #1a6cf5;
+      --blue-bright:    #3d87ff;
+      --blue-dim:       #0d3d8a;
+      --amber:          #f59e0b;
+      --amber-dim:      #92400e;
+      --red:            #ef4444;
+      --red-dim:        #7f1d1d;
+      --green:          #22c55e;
+      --green-dim:      #14532d;
+      --text-primary:   #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted:     #4a6080;
+      --text-code:      #7dd3fc;
+      --mono:           'IBM Plex Mono', monospace;
+      --sans:           'IBM Plex Sans', sans-serif;
+    }
+
+    /* ─── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 14px; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ─── Top Nav Bar ───────────────────────────────────────────── */
+    .topbar {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--blue-primary);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .brand-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .topbar-meta {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    .version-badge {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+
+    /* ─── Layout ────────────────────────────────────────────────── */
+    .page-wrapper {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 32px 64px;
+    }
+
+    /* ─── Page Header ───────────────────────────────────────────── */
+    .page-header {
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .breadcrumb {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .breadcrumb span { color: var(--blue-bright); }
+
+    .page-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+    }
+
+    .page-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      max-width: 640px;
+    }
+
+    /* ─── Two-Column Grid ───────────────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* ─── Card ──────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-icon {
+      font-size: 15px;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* ─── Form Elements ─────────────────────────────────────────── */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-accent);
+      border-radius: 5px;
+      color: var(--text-primary);
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -webkit-appearance: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--blue-primary);
+      box-shadow: 0 0 0 3px rgba(26,108,245,0.15);
+    }
+
+    select option {
+      background: var(--bg-elevated);
+    }
+
+    .input-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 5px;
+      font-family: var(--mono);
+    }
+
+    /* Key input with show/hide toggle */
+    .key-wrapper {
+      position: relative;
+    }
+
+    .key-wrapper input {
+      padding-right: 40px;
+    }
+
+    .key-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .key-toggle:hover { color: var(--text-secondary); }
+
+    /* File input */
+    .file-drop {
+      border: 2px dashed var(--border-accent);
+      border-radius: 6px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+    }
+
+    .file-drop:hover,
+    .file-drop.drag-over {
+      border-color: var(--blue-primary);
+      background: rgba(26,108,245,0.04);
+    }
+
+    .file-drop input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .file-drop-icon { font-size: 28px; margin-bottom: 8px; }
+
+    .file-drop-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .file-drop-sub {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+    }
+
+    #file-name-display {
+      margin-top: 10px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--blue-bright);
+    }
+
+    /* Provider selector */
+    .provider-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .provider-tab {
+      flex: 1;
+      padding: 8px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text-secondary);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .provider-tab:hover {
+      border-color: var(--border-accent);
+      color: var(--text-primary);
+    }
+
+    .provider-tab.active {
+      background: var(--blue-dim);
+      border-color: var(--blue-primary);
+      color: var(--blue-bright);
+    }
+
+    /* Hidden radio backing */
+    .provider-radio { display: none; }
+
+    /* ─── Submit Button ──────────────────────────────────────────── */
+    .btn-analyze {
+      width: 100%;
+      padding: 12px;
+      background: var(--blue-primary);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn-analyze:hover { background: var(--blue-bright); }
+    .btn-analyze:active { transform: scale(0.99); }
+
+    /* ─── Divider ────────────────────────────────────────────────── */
+    .section-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    /* ─── Alerts & Errors ────────────────────────────────────────── */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .alert-error {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5;
+    }
+
+    .alert-icon { flex-shrink: 0; margin-top: 1px; }
+
+    /* ─── Results Panel ──────────────────────────────────────────── */
+    .results-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 480px;
+      color: var(--text-muted);
+      gap: 14px;
+    }
+
+    .placeholder-icon {
+      font-size: 48px;
+      opacity: 0.3;
+    }
+
+    .placeholder-text {
+      font-size: 13px;
+      text-align: center;
+      max-width: 280px;
+      line-height: 1.8;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+    }
+
+    .stat-cell {
+      flex: 1;
+      padding: 12px 16px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-cell:last-child { border-right: none; }
+
+    .stat-label {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .stat-value.blue  { color: var(--blue-bright); }
+    .stat-value.green { color: var(--green); }
+
+    /* Tab nav for results */
+    .tab-nav {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      font-family: var(--sans);
+    }
+
+    .tab-btn:hover { color: var(--text-secondary); }
+
+    .tab-btn.active {
+      color: var(--blue-bright);
+      border-bottom-color: var(--blue-primary);
+    }
+
+    .tab-panel { display: none; padding: 24px; }
+    .tab-panel.active { display: block; }
+
+    /* AI output markdown-style rendering */
+    .ai-output {
+      font-size: 13px;
+      line-height: 1.85;
+      color: var(--text-secondary);
+    }
+
+    .ai-output h2 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--blue-bright);
+      margin: 24px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ai-output h2:first-child { margin-top: 0; }
+
+    .ai-output p { margin-bottom: 12px; }
+
+    .ai-output ul, .ai-output ol {
+      padding-left: 20px;
+      margin-bottom: 12px;
+    }
+
+    .ai-output li { margin-bottom: 6px; }
+
+    .ai-output strong { color: var(--text-primary); font-weight: 600; }
+
+    .ai-output code {
+      font-family: var(--mono);
+      font-size: 11px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: var(--text-code);
+    }
+
+    /* Raw dump */
+    .raw-dump {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #4ade80;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 16px;
+      white-space: pre;
+      overflow-x: auto;
+      max-height: 480px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    /* Severity badge */
+    .severity-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 3px;
+      margin-left: auto;
+    }
+
+    .severity-critical { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .severity-high     { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+    .severity-medium   { background: rgba(26,108,245,0.12); color: var(--blue-bright); border: 1px solid rgba(26,108,245,0.3); }
+    .severity-low      { background: rgba(34,197,94,0.12);  color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+
+    /* ─── Footer ─────────────────────────────────────────────────── */
+    .footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+    }
+
+    /* ─── Spinner (loading) ──────────────────────────────────────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    form.loading .spinner  { display: block; }
+    form.loading .btn-text { display: none; }
+    form.loading .btn-analyze { opacity: 0.8; pointer-events: none; }
+
+    /* ─── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ── Top Navigation Bar ──────────────────────────────────────────── -->
+<nav class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-icon">⬡</div>
+    <div>
+      <div class="brand-name">NetDiag Pro</div>
+      <div class="brand-sub">Packet Analysis Platform</div>
+    </div>
+  </div>
+  <div class="topbar-meta">
+    <div class="status-pill"><span class="dot"></span>System Operational</div>
+    <span class="version-badge">v2.0.0</span>
+  </div>
+</nav>
+
+<!-- ── Page Body ────────────────────────────────────────────────────── -->
+<div class="page-wrapper">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="breadcrumb">Network Tools / <span>AI Packet Analyzer</span></div>
+    <div class="page-title">AI-Powered TCPDump Analysis</div>
+    <div class="page-desc">
+      Upload a PCAP or raw dump file. The engine runs <code style="font-family:var(--mono);font-size:12px;color:var(--text-code)">tcpdump</code>
+      against it and sends the output to your selected AI model for structured root-cause analysis.
+    </div>
+  </div>
+
+  <!-- Alert area -->
+  {% if errors %}
+  <div style="margin-bottom:24px;">
+    {% for e in errors %}
+    <div class="alert alert-error">
+      <span class="alert-icon">✕</span>
+      <span>{{ e }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Main two-column grid -->
+  <div class="main-grid">
+
+    <!-- ── Left Panel: Configuration Form ─────────────────────────── -->
+    <div>
+
+      <form action="/analyze" method="post" enctype="multipart/form-data" id="analyzeForm">
+
+        <!-- AI Provider Card -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <span class="card-icon">🤖</span>
+            <span class="card-title">AI Provider</span>
+          </div>
+          <div class="card-body">
+
+            <!-- Provider selector tabs -->
+            <div class="form-group">
+              <label>Provider</label>
+              <div class="provider-tabs">
+                <div class="provider-tab {% if not provider or provider=='anthropic' %}active{% endif %}"
+                     onclick="selectProvider('anthropic', this)">Anthropic</div>
+                <div class="provider-tab {% if provider=='openai' %}active{% endif %}"
+                     onclick="selectProvider('openai', this)">OpenAI</div>
+              </div>
+              <input type="hidden" name="provider" id="providerInput"
+                     value="{{ provider or 'anthropic' }}" />
+            </div>
+
+            <!-- Model select (updated dynamically) -->
+            <div class="form-group">
+              <label>Model</label>
+              <select name="model" id="modelSelect">
+                <option value="claude-sonnet-4-20250514"
+                  {% if not provider or provider=='anthropic' %}selected{% endif %}>
+                  claude-sonnet-4-20250514
+                </option>
+                <option value="claude-opus-4-20250514">claude-opus-4-20250514</option>
+                <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+                <option value="gpt-4o"
+                  {% if provider=='openai' and model=='gpt-4o' %}selected{% endif %}>
+                  gpt-4o
+                </option>
+                <option value="gpt-4-turbo"
+                  {% if provider=='openai' and model=='gpt-4-turbo' %}selected{% endif %}>
+                  gpt-4-turbo
+                </option>
+              </select>
+            </div>
+
+            <!-- Standard API Key input -->
+            <div class="form-group">
+              <label>API Key</label>
+              <div class="key-wrapper">
+                <input type="password" name="api_key" id="apiKeyInput"
+                       placeholder="sk-ant-api03-… or sk-…"
+                       autocomplete="off" spellcheck="false" />
+                <button type="button" class="key-toggle" onclick="toggleKey()" title="Show / Hide key">
+                  👁
+                </button>
+              </div>
+              <div class="input-hint">Key is sent over HTTPS and never stored.</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Capture Settings Card -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <span class="card-icon">⚙️</span>
+            <span class="card-title">Capture Settings</span>
+          </div>
+          <div class="card-body">
+
+            <div class="form-group">
+              <label>TCPDump Flags</label>
+              <input type="text" name="flags"
+                     value="{{ flags or '-nn -v' }}"
+                     placeholder="-nn -v" />
+              <div class="input-hint">Applied as: tcpdump &lt;flags&gt; -r &lt;file&gt;</div>
+            </div>
+
+            <div class="form-group">
+              <label>Capture File (PCAP / dump)</label>
+              <div class="file-drop" id="fileDrop">
+                <input type="file" name="pcap_file" id="fileInput"
+                       accept=".pcap,.pcapng,.cap,.dump,.log,.txt"
+                       onchange="updateFileName(this)" />
+                <div class="file-drop-icon">📁</div>
+                <div class="file-drop-label">Drop file here or click to browse</div>
+                <div class="file-drop-sub">.pcap .pcapng .cap .dump .log .txt</div>
+                <div id="file-name-display"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-analyze" onclick="setLoading()">
+          <span class="btn-text">⚡ Run Analysis</span>
+          <div class="spinner"></div>
+        </button>
+
+      </form>
+
+    </div><!-- /left -->
+
+    <!-- ── Right Panel: Results ────────────────────────────────────── -->
+    <div class="card">
+
+      {% if ai_error %}
+        <!-- AI error state -->
+        <div class="card-header">
+          <span class="card-icon">⚠️</span>
+          <span class="card-title">Analysis Error</span>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-error">
+            <span class="alert-icon">✕</span>
+            <span>{{ ai_error }}</span>
+          </div>
+          {% if raw_dump %}
+          <div class="section-divider"></div>
+          <label style="margin-bottom:8px;display:block;">Raw TCPDump Output (first 8 KB)</label>
+          <div class="raw-dump">{{ raw_dump }}</div>
+          {% endif %}
+        </div>
+
+      {% elif output %}
+        <!-- Success state -->
+        {% if stats %}
+        <div class="stats-bar">
+          <div class="stat-cell">
+            <div class="stat-label">File</div>
+            <div class="stat-value blue" style="font-size:12px;word-break:break-all;">{{ stats.file_name }}</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-label">Lines Parsed</div>
+            <div class="stat-value">{{ stats.total_lines }}</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-label">Status</div>
+            <div class="stat-value green">Complete</div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="tab-nav">
+          <button class="tab-btn active" onclick="switchTab('ai', this)">AI Analysis</button>
+          <button class="tab-btn" onclick="switchTab('raw', this)">Raw Dump</button>
+        </div>
+
+        <div id="tab-ai" class="tab-panel active">
+          <div class="ai-output" id="aiOutputContent">
+            {{ output }}
+          </div>
+        </div>
+
+        <div id="tab-raw" class="tab-panel">
+          <div class="raw-dump">{{ raw_dump or '(no raw output)' }}</div>
+        </div>
+
+      {% else %}
+        <!-- Empty / placeholder state -->
+        <div class="results-placeholder">
+          <div class="placeholder-icon">📡</div>
+          <div class="placeholder-text">
+            Configure your AI provider and upload a capture file to begin analysis.
+            <br><br>
+            The AI model will return a structured report with root-cause findings and recommended fixes.
+          </div>
+        </div>
+      {% endif %}
+
+    </div><!-- /right -->
+
+  </div><!-- /main-grid -->
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>NetDiag Pro v2.0 · AI Packet Analysis Platform</span>
+    <span>Key is never persisted · HTTPS only</span>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+<script>
+/* ── Provider Tabs ────────────────────────────────────────── */
+const anthropicModels = [
+  { v: 'claude-sonnet-4-20250514',  l: 'claude-sonnet-4-20250514'  },
+  { v: 'claude-opus-4-20250514',    l: 'claude-opus-4-20250514'    },
+  { v: 'claude-haiku-4-5-20251001', l: 'claude-haiku-4-5-20251001' },
+];
+const openaiModels = [
+  { v: 'gpt-4o',       l: 'gpt-4o'       },
+  { v: 'gpt-4-turbo',  l: 'gpt-4-turbo'  },
+  { v: 'gpt-3.5-turbo',l: 'gpt-3.5-turbo'},
+];
+
+function selectProvider(name, el) {
+  document.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('providerInput').value = name;
+
+  const sel = document.getElementById('modelSelect');
+  sel.innerHTML = '';
+  const models = name === 'anthropic' ? anthropicModels : openaiModels;
+  models.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.v; opt.textContent = m.l;
+    sel.appendChild(opt);
+  });
+
+  const placeholder = name === 'anthropic'
+    ? 'sk-ant-api03-…' : 'sk-…';
+  document.getElementById('apiKeyInput').placeholder = placeholder;
+}
+
+/* ── Key Show/Hide ────────────────────────────────────────── */
+function toggleKey() {
+  const inp = document.getElementById('apiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+/* ── File Name Display ────────────────────────────────────── */
+function updateFileName(input) {
+  const disp = document.getElementById('file-name-display');
+  disp.textContent = input.files.length ? '✓ ' + input.files[0].name : '';
+}
+
+/* ── Drag & Drop visual ───────────────────────────────────── */
+const drop = document.getElementById('fileDrop');
+drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('drag-over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+drop.addEventListener('drop',      e => {
+  e.preventDefault();
+  drop.classList.remove('drag-over');
+  const fi = document.getElementById('fileInput');
+  fi.files = e.dataTransfer.files;
+  updateFileName(fi);
+});
+
+/* ── Tab Switching ────────────────────────────────────────── */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+/* ── Loading State ────────────────────────────────────────── */
+function setLoading() {
+  setTimeout(() => document.getElementById('analyzeForm').classList.add('loading'), 50);
+}
+
+/* ── Render Markdown-like AI output ───────────────────────── */
+(function renderAI() {
+  const el = document.getElementById('aiOutputContent');
+  if (!el) return;
+  let html = el.textContent;
+  // h2 headings
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  // bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // bullets
+  html = html.replace(/^[-•] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/gs, m => '<ul>' + m + '</ul>');
+  // numbered
+  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  // paragraphs
+  const lines = html.split('\n');
+  let out = '';
+  lines.forEach(l => {
+    const t = l.trim();
+    if (!t || t.startsWith('<')) { out += l + '\n'; }
+    else { out += '<p>' + t + '</p>\n'; }
+  });
+  el.innerHTML = out;
+})();
+</script>
+
+</body>
+</html>
